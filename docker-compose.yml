@@ -1,0 +1,115 @@
+
+services:
+  redis-master-1:
+    container_name: redis-master-1
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6379", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-master-1-data:/data
+
+  redis-master-2:
+    container_name: redis-master-2
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6479", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6479:6479"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-master-2-data:/data
+
+  redis-master-3:
+    container_name: redis-master-3
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6579", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6579:6579"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-master-3-data:/data
+
+  redis-slave-1:
+    container_name: redis-slave-1
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6380", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6380:6380"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-slave-1-data:/data
+
+  redis-slave-2:
+    container_name: redis-slave-2
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6480", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6480:6480"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-slave-2-data:/data
+
+  redis-slave-3:
+    container_name: redis-slave-3
+    platform: linux/x86_64 # m1 MacOS의 경우
+    image: redis:7.2
+    command: ["host.docker.internal", "--port", "6580", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    ports:
+      - "6580:6580"
+    networks:
+      - redis-net
+    restart: always
+    volumes:
+      - redis-slave-3-data:/data
+
+  redis-cluster-entry:
+    container_name: redis-cluster-entry
+    image: redis:7.2
+    platform: linux/x86_64 # m1 MacOS의 경우
+    networks:
+      - redis-net
+    command:
+      - bash
+      - -c
+      - |
+        sleep 5
+        redis-cli --cluster create redis-master-1:6379 redis-master-2:6479 redis-master-3:6579 --cluster-yes
+        redis-cli --cluster add-node redis-slave-1:6380 redis-master-1:6379 --cluster-slave
+        redis-cli --cluster add-node redis-slave-2:6480 redis-master-2:6479 --cluster-slave
+        redis-cli --cluster add-node redis-slave-3:6580 redis-master-3:6579 --cluster-slave
+    depends_on:
+      - redis-master-1
+      - redis-master-2
+      - redis-master-3
+      - redis-slave-1
+      - redis-slave-2
+      - redis-slave-3
+    restart: on-failure
+
+networks:
+  redis-net:
+    driver: bridge
+
+volumes:
+  redis-master-1-data:
+  redis-master-2-data:
+  redis-master-3-data:
+  redis-slave-1-data:
+  redis-slave-2-data:
+  redis-slave-3-data:
