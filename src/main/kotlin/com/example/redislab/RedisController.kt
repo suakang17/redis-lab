@@ -12,7 +12,7 @@ class RedisController(private val service: RedisService) {
     }
 
     @GetMapping("/get")
-    fun getValue(@RequestParam key: String): String {
+    fun getValue(@RequestParam key: String): String? {
         return service.getValue(key)
     }
 }
